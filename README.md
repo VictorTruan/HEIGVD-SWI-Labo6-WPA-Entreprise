@@ -50,33 +50,136 @@ rfkill unblock wlan
 Dans cette première partie, vous allez analyser [une connexion WPA Entreprise](files/auth.pcap) avec Wireshark et fournir des captures d’écran indiquant dans chaque capture les données demandées.
 
 - Comparer [la capture](files/auth.pcap) au processus d’authentification donné en théorie (n’oubliez pas les captures d'écran pour illustrer vos comparaisons !). En particulier, identifier les étapes suivantes :
-	- Requête et réponse d’authentification système ouvert
- 	- Requête et réponse d’association (ou reassociation)
-	- Négociation de la méthode d’authentification entreprise
-	- Phase d’initiation. Arrivez-vous à voir l’identité du client ?
-	- Phase hello :
-		- Version TLS
-		- Suites cryptographiques et méthodes de compression proposées par le client et acceptées par l’AP
-		- Nonces
-		- Session ID
-	- Phase de transmission de certificats
-	 	- Echanges des certificats
-		- Change cipher spec
-	- Authentification interne et transmission de la clé WPA (échange chiffré, vu comme « Application data »)
-	- 4-way handshake
+```
+Source : https://tools.ietf.org/html/rfc3748
+
+Afin de pouvoir correctement analysé la capture, nous avons appliqué un filtre "eapol" afin d'obtenir les adresses MAC des deux appareils concerné par la connexion. Une fois ces deux adresses obtenues nous avons utilisé le filtre suivant:
+
+(((wlan.sa == 30:74:96:70:df:32) && (wlan.da == dc:a5:f4:60:bf:50)) || ((wlan.sa == dc:a5:f4:60:bf:50) && (wlan.da == 30:74:96:70:df:32)))
+```
+- Requête et réponse d’authentification système ouvert
+```
+Le paquet 21455 est une demande d'authentification à système ouvert de la part de HuaweiTe_70 à Cisco_60
+```
+
+![](files/Images/Labo06_Image01.png)
+
+```
+Le paquet 21457 est la réponse de Cisco_60 à HuaweiTe_70 indiquant une réussite.
+```
+
+![](files/Images/Labo06_Image02.png)
+
+- Requête et réponse d’association (ou reassociation)
+```
+Le paquet 21460 est une demande de Reassociation de la part de HuaweiTe_70 à Cisco_60.
+```
+
+![](files/Images/Labo06_Image03.png)
+```
+
+Le paquet 21462 est une réponse de Reassociation de la part de Cisco_60 indiquant un succès.
+```
+![](files/Images/Labo06_Image04.png)
+
+- Négociation de la méthode d’authentification entreprise
+```
+Le paquet 21471 est une demande deCisco_60 d'utiliser EAP-TLS.
+```
+![](files/Images/Labo06_Image05.png)
+```
+Le paquet 21475 est une réponse Legacy Nak servant à indiquer que la demande est refusée et à proposé un type d'authentification souhaité.
+```
+![](files/Images/Labo06_Image06.png)
+```
+Puis le paquet 21477 est à nouveau une requête de protocol pour EAP-PEAP
+```
+![](files/Images/Labo06_Image07.png)
+
+- Phase d’initiation. Arrivez-vous à voir l’identité du client ?
+```
+Le paquet 21465 est une demande d'identité de la part de Cisco_60 pour HuaweiTe_70.
+```
+![](files/Images/Labo06_Image08.png)
+```
+Le paquet 21469 est la réponse de la part de HuaweiTe_70. Cette réponse contient l'identité demandée par le point d'accès pour le serveur d'auth.
+```
+![](files/Images/Labo06_Image09.png)
+```
+Nous arrivons à voir l'identité du client qui est einet\joel.gonin.
+```
+- Phase hello :
+```
+Le paquet 21495 est le Client Hello, il contient toutes les informations suivantes
+```
+![](files/Images/Labo06_Image10.png)
+
+ 		Les fragments 21498, 21502, 21508, 21512 et 21517 sont le Serveur Hello, son certificat ainsi que le Serveur Hello Done.
+
+![](files/Images/Labo06_Image12.png)
+
+- Version TLS :
+```
+La version 1.0 est utilisée malgré une demande de version 1.2. TODO VERIFIER POURQUOI
+```
+- Suites cryptographiques et méthodes de compression proposées par le client et acceptées par l’AP
+```
+Aucune méthode de compression n'est proposée et donc utilisée. Par contre 31 Ciphersuites sont proposée par le client 
+```
+![](files/Images/Labo06_Image11.png)
+```
+et c'est TLS_RSA_WITH_AES_256_CBC_SHA qui est sélectionné par le serveur.
+```
+
+- Nonces
+```
+Le nonce du client est 95:5b:f5:b7:16:e2:4a:72:9c:4b:60:60:9b:8c:e4:82:01:4a:c3:8f:1e:9c:b8:cf:2b:f8:fd:30:bf:89:95:f1
+et celui du serveur est 00:3b:6c:26:76:ff:d7:98:14:e5:6c:06:5e:5b:0c:39:cb:26:60:01:48:ca:1e:9b:3e:8a:f8:34:26:d4:6e:11
+```
+
+- Session ID
+```
+La session ID est 9f:1b:bf:1e:90:b8:83:66:a8:36:db:08:d6:59:f9:06:a6:37:ac:31:92:0e:06:f6:22:76:2c:a6:c5:22:a6:4f pour le client
+Celle du serveur est ad:41:64:1e:c2:a7:d1:d5:a9:f6:58:6c:05:70:3a:8c:bd:bf:6e:f0:05:3a:d5:17:f6:e6:9b:28:68:04:f5:f2
+```
+	TODO VERIFIER SI C'EST NORMAL D'EN AVOIR 2
+- Phase de transmission de certificats
+	- Echanges des certificats 
+```
+Le client n'a pas de certificat lors de l'utilisation de  EAP-PEAP. Les certificats du serveur sont visibles lors du serveur Hello.
+``` 
+- Change cipher spec
+```
+Le cipher change spec est le paquet 21524
+```
+![](files/Images/Labo06_Image13.png)
+
+- Authentification interne et transmission de la clé WPA (échange chiffré, vu comme « Application data »)
+```
+Nous pouvons voir les données chiffrées de l'authentification interne car cela à lieu entre le suppliant et le serveur au travers du wifi. Ces paquets sont visibles sur la capture ci-dessous.
+Par contre la transmission des clef WPA est faite entre le serveur et l'AP. Les deux étant dans le DS il n'est pas possible de voir cet échange.
+```
+![](files/Images/Labo06_Image14.png)
+
+- 4-way handshake
+```
+Le 4 ways handshake est visible après la réponse Succes de la part de Cisco_60. (Paquet 21567). Il devrait être composé des messages 1,2,3 et 4 mais nous voyons pas de message 2 et un rejeu du message 3. Aucun autre handshake complet entre ces appareils n'est visible.
+```
+![](files/Images/Labo06_Image16.png)
 
 ### Répondez aux questions suivantes :
  
 > **_Question :_** Quelle ou quelles méthode(s) d’authentification est/sont proposé(s) au client ?
 > 
 > **_Réponse :_** 
-
+La méthode d'authentification proposée au client est EAP-TLS et ce choix est décliné avec une demande d'utiliser EAP-PEAP. Après cela la méthode EAP-PEAP lui est proposée.
+Voir les captures de la partie : Négociation de la méthode d’authentification entreprise
 ---
 
 > **_Question:_** Quelle méthode d’authentification est finalement utilisée ?
 > 
 > **_Réponse:_** 
-
+La méthode utilisée est EAP-PEAP. Nous pouvons le voir dans le protocol utilisé lors du Client Hello au paquet 21495.
 ---
 
 > **_Question:_** Lors de l’échange de certificats entre le serveur d’authentification et le client :
@@ -84,11 +187,11 @@ Dans cette première partie, vous allez analyser [une connexion WPA Entreprise](
 > - a. Le serveur envoie-t-il un certificat au client ? Pourquoi oui ou non ?
 > 
 > **_Réponse:_**
-> 
+>  Oui, le serveur envoie son certificat afin que le client puisse le vérifier puis utiliser la clef publique présente pour authentifier le serveur.
 > - b. Le client envoie-t-il un certificat au serveur ? Pourquoi oui ou non ?
 > 
 > **_Réponse:_**
-> 
+> Non, la méthode d'authentification est du EAP-PEAP qui n'est pas basée sur un certificat mais sur une étape d'authentification interne qui est visible comme étant des applications data.
 
 ---
 
