@@ -120,7 +120,7 @@ Le paquet 21495 est le Client Hello, il contient toutes les informations suivant
 
 - Version TLS :
 ```
-La version 1.0 est utilisée malgré une demande de version 1.2. TODO VERIFIER POURQUOI
+La version 1.0 est utilisée malgré une demande de version 1.2.
 ```
 - Suites cryptographiques et méthodes de compression proposées par le client et acceptées par l’AP
 ```
@@ -134,15 +134,17 @@ et c'est TLS_RSA_WITH_AES_256_CBC_SHA qui est sélectionné par le serveur.
 - Nonces
 ```
 Le nonce du client est 95:5b:f5:b7:16:e2:4a:72:9c:4b:60:60:9b:8c:e4:82:01:4a:c3:8f:1e:9c:b8:cf:2b:f8:fd:30:bf:89:95:f1
+
 et celui du serveur est 00:3b:6c:26:76:ff:d7:98:14:e5:6c:06:5e:5b:0c:39:cb:26:60:01:48:ca:1e:9b:3e:8a:f8:34:26:d4:6e:11
 ```
 
 - Session ID
 ```
-La session ID est 9f:1b:bf:1e:90:b8:83:66:a8:36:db:08:d6:59:f9:06:a6:37:ac:31:92:0e:06:f6:22:76:2c:a6:c5:22:a6:4f pour le client
+Celle du client est  9f:1b:bf:1e:90:b8:83:66:a8:36:db:08:d6:59:f9:06:a6:37:ac:31:92:0e:06:f6:22:76:2c:a6:c5:22:a6:4f
+
 Celle du serveur est ad:41:64:1e:c2:a7:d1:d5:a9:f6:58:6c:05:70:3a:8c:bd:bf:6e:f0:05:3a:d5:17:f6:e6:9b:28:68:04:f5:f2
 ```
-	TODO VERIFIER SI C'EST NORMAL D'EN AVOIR 2
+
 - Phase de transmission de certificats
 	- Echanges des certificats 
 ```
